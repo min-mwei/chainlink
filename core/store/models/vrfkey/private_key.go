@@ -10,7 +10,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"go.dedis.ch/kyber/v3"
 )
@@ -52,18 +51,11 @@ func newPrivateKey(rawKey *big.Int) (*PrivateKey, error) {
 	return sk, nil
 }
 
-// k.MarshaledProof(seed) is a VRF proof of randomness using k and seed, in the
-// form required by VRF.sol's randomValueFromVRFProof
-func (k *PrivateKey) MarshaledProof(seed *big.Int) (vrf.MarshaledProof, error) {
-	proof, err := vrf.GenerateProof(secp256k1.ScalarToHash(k.k), common.BigToHash(seed))
-	if err != nil {
-		return vrf.MarshaledProof{}, err
-	}
-	rv, err := proof.MarshalForSolidityVerifier()
-	if err != nil {
-		return vrf.MarshaledProof{}, err
-	}
-	return rv, nil
+// MarshaledProof is a VRF proof of randomness using i.Key and seed, in the form
+// required by VRFCoordinator.sol's fulfillRandomnessRequest
+func (k *PrivateKey) MarshaledProof(i vrf.PreSeedData) (
+	vrf.MarshaledOnChainResponse, error) {
+	return vrf.GenerateProofResponse(secp256k1.ScalarToHash(k.k), i)
 }
 
 // gethKey returns the geth keystore representation of k. Do not abuse this to

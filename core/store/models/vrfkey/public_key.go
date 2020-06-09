@@ -44,15 +44,16 @@ func NewPublicKey(rawKey [CompressedPublicKeyLength]byte) *PublicKey {
 }
 
 // NewPublicKeyFromHex returns the PublicKey encoded by 0x-hex string hex, or errors
-func NewPublicKeyFromHex(hex string) (*PublicKey, error) {
+func NewPublicKeyFromHex(hex string) (PublicKey, error) {
 	rawKey, err := hexutil.Decode(hex)
 	if err != nil {
-		return nil, err
+		return PublicKey{}, err
 	}
 	if l := len(rawKey); l != CompressedPublicKeyLength {
-		return nil, fmt.Errorf("wrong length for public key: %s of length %d", rawKey, l)
+		return PublicKey{}, fmt.Errorf(
+			"wrong length for public key: %s of length %d", rawKey, l)
 	}
-	k := &PublicKey{}
+	var k PublicKey
 	if c := copy(k[:], rawKey[:]); c != CompressedPublicKeyLength {
 		panic(fmt.Errorf("failed to copy entire key to return value"))
 	}
@@ -66,7 +67,7 @@ func (k *PublicKey) SetFromHex(hex string) error {
 	if err != nil {
 		return err
 	}
-	k.Set(*nk)
+	k.Set(nk)
 	return nil
 }
 
@@ -110,4 +111,9 @@ func (k *PublicKey) Address() common.Address {
 		return common.Address{}
 	}
 	return common.BytesToAddress(hash.Bytes()[12:])
+}
+
+// IsZero returns true iff k is the zero value for PublicKey
+func (k *PublicKey) IsZero() bool {
+	return *k == PublicKey{}
 }
